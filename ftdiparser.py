@@ -24,14 +24,14 @@ import matplotlib.pyplot as plt
 
 def dump(url='ftdi://ftdi:232h:FT42C48K/1',
          baudrate=12000000,
-         nb_bytes=100000):
+         nb_bytes=10000000):
     # Enable pyserial extensions
     import pyftdi.serialext
     '''
-  ftdi_urls.py 
-  Available interfaces:
-  ftdi://ftdi:232h:FT42C48K/1   (C232HD-DDHSP-0)
-  '''
+    ftdi_urls.py 
+    Available interfaces:
+    ftdi://ftdi:232h:FT42C48K/1   (C232HD-DDHSP-0)
+    '''
     # Open a serial port on FTDI device
     port = pyftdi.serialext.serial_for_url(url, baudrate)
 
@@ -45,7 +45,11 @@ def dump(url='ftdi://ftdi:232h:FT42C48K/1',
 '''This will parse data according to a given format, and return a dictionary of numpy arrays'''
 
 
-def parseData(rawData, data_names, data_format, data_scales, print_status=True):
+def parseData(rawData,
+              data_names,
+              data_format,
+              data_scales,
+              print_status=True):
     import struct
     import crcmod.predefined
     crc8 = crcmod.predefined.mkPredefinedCrcFun('crc-8-maxim')
@@ -70,23 +74,24 @@ def parseData(rawData, data_names, data_format, data_scales, print_status=True):
                     data[data_names[n]][j] = sample[2 + n] * data_scales[n]
             j += 1
             i += frame_size
-            if (print_status and j % 10000 == 0): print(f"{int(100*i/length)} %")
+            if (print_status and j % 10000 == 0):
+                print(f"{int(100*i/length)} %")
         if (j >= N): break
         if (i >= length): break
     return (data)
 
-
+# Example of use
 dataRaw = dump()
-data = parseData(dataRaw) 
 
 data_names = ['time', 'pos_m1', 'pos_m2', 'pos_as5047u', 'vel_as5047u']
 data_scales = [25e-6, 1.0, 1.0, 1.0, 1.0]
 data_format = "Iffff"
 
+data = parseData(dataRaw, data_names, data_format, data_scales)
 plt.plot(data['crc'])
 plt.plot(data['pos_m1'])
 plt.plot(data['pos_m2'])
 plt.plot(data['pos_as5047u'])
 plt.plot(data['vel_as5047u'])
-plt.ylim(-10, 10)
+plt.ylim(-10,10)
 plt.show()
